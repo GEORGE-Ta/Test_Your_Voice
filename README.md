@@ -39,7 +39,7 @@ cd Test_Your_Voice
 
 2. 安装依赖
 ```bash
-pnpm install
+npm install
 ```
 
 3. 设置环境变量
@@ -50,7 +50,7 @@ VITE_GEMINI_API_KEY=your_api_key_here
 
 4. 运行开发服务器
 ```bash
-pnpm dev
+npm run dev
 ```
 
 ## 📖 使用方法
