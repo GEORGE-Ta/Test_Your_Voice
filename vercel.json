@@ -6,14 +6,14 @@
       "use": "@vercel/static-build"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/api/.*",
-      "dest": "https://test-your-voice-ae7ae2f9c2b2.herokuapp.com/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://test-your-voice-ae7ae2f9c2b2.herokuapp.com/api/:path*"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -30,7 +30,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
+          "value": "X-Requested-With, Content-Type, Accept"
         }
       ]
     }
