@@ -1,1 +1,1 @@
-web: cd server && node src/index.js
+web: cd server && pnpm start
