@@ -3,6 +3,7 @@ import AudioRecorder from './components/AudioRecorder';
 import FileUploader from './components/FileUploader';
 import SubmitButton from './components/SubmitButton';
 import AnalysisResult from './components/AnalysisResult';
+import Footer from './components/Footer';
 import { analyzeAudio, isAudioFileValid } from './utils/gemini';
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
           error={error}
         />
       </div>
+      <Footer />
     </div>
   );
 }

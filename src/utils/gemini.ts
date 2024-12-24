@@ -1,8 +1,7 @@
+import { geminiClient } from './geminiClient';
 import { convertAudioToBase64 } from './audioProcessing';
 import { validateAudioFile } from './audioValidation';
 import { AudioData } from './types';
-
-const API_URL = 'http://localhost:3000/api/analyze';
 
 export async function analyzeAudio(audioFile: File): Promise<string> {
   try {
@@ -53,27 +52,13 @@ export async function analyzeAudio(audioFile: File): Promise<string> {
 6. 灰音：灰噪音是一种经过人耳等响度调制的噪音，听起来每个频段都一样响亮。它常用于心理和音频测试，帮助听觉敏感的人适应环境噪音。
 `;
     
-    // Send to server
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt,
-        audioData
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('服务器响应错误');
-    }
-
-    const data = await response.json();
-    return data.analysis;
+    // Generate content
+    return await geminiClient.generateContent(prompt, audioData);
   } catch (error) {
-    console.error('分析错误:', error);
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('音频分析失败，请重试');
   }
 }
 
