@@ -1,1 +1,1 @@
-web: cd server && pnpm start
+web: pnpm start
