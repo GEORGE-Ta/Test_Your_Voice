@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const corsOptions = {
   origin: [
     'https://shengyin.us.kg',                    // 你的主域名
-    'https://test-your-voice.vercel.app/',        // Vercel 部署的域名（需要替换成你的）
+    'https://test-your-voice.vercel.app',        // Vercel 部署的域名（需要替换成你的）
     'http://localhost:5173',                     // Vite 开发服务器
     'http://localhost:3000'                      // 备用开发端口
   ],

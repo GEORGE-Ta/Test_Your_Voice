@@ -9,7 +9,7 @@
   "routes": [
     {
       "src": "^/api/.*",
-      "dest": "https://your-heroku-app.herokuapp.com/api/$1"
+      "dest": "https://test-your-voice.herokuapp.com/api/$1"
     },
     {
       "src": "/(.*)",
@@ -26,11 +26,11 @@
         },
         {
           "key": "Access-Control-Allow-Methods",
-          "value": "GET,HEAD,PUT,PATCH,POST,DELETE"
+          "value": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Origin, X-Requested-With, Content-Type, Accept"
+          "value": "Content-Type, Authorization"
         }
       ]
     }
