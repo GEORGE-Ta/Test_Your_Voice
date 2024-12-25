@@ -3,90 +3,99 @@ import AudioRecorder from './components/AudioRecorder';
 import FileUploader from './components/FileUploader';
 import SubmitButton from './components/SubmitButton';
 import AnalysisResult from './components/AnalysisResult';
-import Footer from './components/Footer';
 import { analyzeAudio } from './utils/api';
 import { validateAudioFile } from './utils/audioValidation';
 import './App.css';
 
 function App() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleAudioRecorded = (audioBlob: Blob) => {
-    const file = new File([audioBlob], 'recorded-audio.wav', { type: 'audio/wav' });
-    try {
-      validateAudioFile(file);
-      setAudioFile(file);
-      setAnalysisResult(null);
-      setError(null);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '音频文件无效');
-      setAudioFile(null);
-    }
-  };
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
   const handleFileSelected = (file: File) => {
     try {
       validateAudioFile(file);
       setAudioFile(file);
-      setAnalysisResult(null);
       setError(null);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '音频文件无效');
-      setAudioFile(null);
+    } catch (err) {
+      setError((err as Error).message);
     }
   };
 
+  const handleAudioRecorded = (audioBlob: Blob) => {
+    const file = new File([audioBlob], 'recorded-audio.wav', { type: 'audio/wav' });
+    setAudioFile(file);
+    setError(null);
+  };
+
   const handleSubmit = async () => {
-    if (!audioFile) return;
+    if (!audioFile) {
+      setError('请先选择或录制音频文件');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setAnalysisResult(null);
 
     try {
-      setIsAnalyzing(true);
-      setError(null);
-      const result = await analyzeAudio(audioFile);
-      setAnalysisResult(result);
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      setError(error instanceof Error ? error.message : '分析失败，请重试');
-      setAudioFile(null);
+      const response = await analyzeAudio(audioFile);
+      setAnalysisResult(response.result);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
-      setIsAnalyzing(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="app-container">
-      <div className="card-container">
-        <h1 className="title">测测你的声音</h1>
-        <p className="subtitle">听感，音色，反馈</p>
-        
-        <div className="content-section">
-          <AudioRecorder onAudioRecorded={handleAudioRecorded} />
-          
-          <FileUploader onFileSelected={handleFileSelected} />
-          
-          <SubmitButton
-            onClick={handleSubmit}
-            disabled={!audioFile || isAnalyzing}
-            isLoading={isAnalyzing}
-          />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">测测你的声音</h1>
+            <p className="text-lg text-gray-600 mb-8">听感，音色，反馈</p>
+          </div>
 
-          {error && (
-            <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded p-4 text-red-300">
-              {error}
+          <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-2">点击按钮录音</p>
+                <AudioRecorder onAudioRecorded={handleAudioRecorded} />
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600 mb-2">从本地文件选择</p>
+                <FileUploader onFileSelected={handleFileSelected} />
+              </div>
+
+              <SubmitButton
+                onClick={handleSubmit}
+                disabled={!audioFile || isLoading}
+                isLoading={isLoading}
+              />
+
+              {error && (
+                <div className="text-red-500 text-sm mt-2">{error}</div>
+              )}
+
+              {analysisResult && (
+                <div className="mt-4">
+                  <div className="text-sm text-gray-500 mb-2">
+                    使用的 AI 模型: Gemini
+                  </div>
+                  <AnalysisResult 
+                    result={analysisResult} 
+                    isLoading={isLoading}
+                    error={error}
+                  />
+                </div>
+              )}
             </div>
-          )}
-
-          {analysisResult && <AnalysisResult
-            result={analysisResult}
-            isLoading={isAnalyzing}
-            error={error}
-          />}
+          </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Send } from 'lucide-react';
 
 interface SubmitButtonProps {
   onClick: () => Promise<void>;
@@ -11,24 +10,17 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ onClick, disabled, isLoadin
   return (
     <button
       onClick={onClick}
-      disabled={disabled || isLoading}
-      className={`
-        flex items-center justify-center gap-2 w-full py-3 rounded-full 
-        transition-all duration-300
-        ${disabled
-          ? 'bg-gray-300 cursor-not-allowed'
-          : 'bg-black hover:bg-gray-800 hover:shadow-md'
-        }
-      `}
+      disabled={disabled}
+      className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
     >
       {isLoading ? (
-        <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center">
+          <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div>
+          分析中...
+        </div>
       ) : (
-        <Send className={`w-4 h-4 sm:w-5 sm:h-5 ${disabled ? 'text-gray-500' : 'text-white'}`} />
+        '提交'
       )}
-      <span className={`text-sm sm:text-base font-medium ${disabled ? 'text-gray-500' : 'text-white'}`}>
-        提交
-      </span>
     </button>
   );
 };

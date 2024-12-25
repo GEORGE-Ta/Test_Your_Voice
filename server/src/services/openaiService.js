@@ -1,25 +1,27 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+const OpenAI = require('openai');
 
-interface AIResponse {
-  result: string;
-  api: 'gemini';
-}
+const openai = new OpenAI({
+  apiKey: 'sk-DSIRW04xeOKDrjn3mBUEJf4k51PABYBSYjs4K1NkMD0a4cJ8',
+  baseURL: 'https://api.chatanywhere.tech/v1'
+});
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const MODEL_NAME = 'gemini-1.5-flash';
-
-export async function analyzeAudio(audioFile: File): Promise<AIResponse> {
+async function analyzeAudio(audioData) {
   try {
-    const base64Audio = await fileToBase64(audioFile);
-    const model = genAI.getGenerativeModel({ 
-      model: MODEL_NAME,
-      generationConfig: {
-        temperature: 0.51
-      }
-    });
+    console.log('Sending request to OpenAI API...');
+    
+    const base64Audio = audioData.data;
+    const mimeType = audioData.mimeType;
 
-    const prompt = `
-你现在是一个声音鉴别机器，你需要根据输入的音频信息输出一下格式内容：（要在每个输出后面加上括号简单解释一下什么意思）
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一个专业的声音分析师，需要根据用户的声音特征进行详细分析。'
+        },
+        {
+          role: 'user',
+          content: `我将为你提供一段语音，请你分析这段语音并按以下格式输出分析结果：
 主音色：e.g. 萝莉音，少女音，少御音，温御音，女王音，御妈音，青受音，青年音，青叔音，公子音，帝王音
 辅音色：e.g. 小颗粒感，低音炮，超高音... （这里要你自己多根据声音写2到3个辅音色）
 声音色系：e.g. 白音， 粉音，棕音，蓝音，紫音，灰音
@@ -44,42 +46,30 @@ export async function analyzeAudio(audioFile: File): Promise<AIResponse> {
 【萝莉音】未成年的音色，变声期之前的女孩。但一般这种声音是伪出来的，很少有木音。是萝莉的。不是很造作，很自然。
 
 声音色系介绍：
-1. 白音：白噪音包含了整个音频频谱的声音频率，听起来像持续的树叶摩擦的"沙沙"声。它适合用作睡眠辅助音，帮助掩盖环境噪音，经常睡不着的人肯定听过。
+1. 白音：白噪音包含了整个音频频谱的声音频率，听起来像持续的树叶摩擦的“沙沙”声。它适合用作睡眠辅助音，帮助掩盖环境噪音，经常睡不着的人肯定听过。
 2. 粉音：粉红噪音的低频更强，高频逐渐减弱，听起来更加柔和，有点类似海浪或风声。它比白噪音更适合睡眠，常用于声音调试和音响系统的测试。
 3. 棕音：棕色噪音的低频成分更加明显，听起来非常低沉、有力。它常用于帮助放松和减轻焦虑，因为低频声音有舒缓效果。
 4. 蓝音：蓝噪音的高频成分更强而低频成分更弱，听起来非常尖锐刺耳。它在特殊音频处理应用中非常有用，但一般不用于日常使用。
 5. 紫音：紫噪音的高频成分极为强烈，低频成分几乎不存在，听起来非常尖锐。它常用于改善耳鸣，因为高频声能够掩盖耳鸣的噪音。
-6. 灰音：灰噪音是一种经过人耳等响度调制的噪音，听起来每个频段都一样响亮。它常用于心理和音频测试，帮助听觉敏感的人适应环境噪音。`;
-
-    const result = await model.generateContent([
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType: audioFile.type,
-          data: base64Audio
+6. 灰音：灰噪音是一种经过人耳等响度调制的噪音，听起来每个频段都一样响亮。它常用于心理和音频测试，帮助听觉敏感的人适应环境噪音。 
+          `
         }
-      }
-    ]);
+      ],
+      temperature: 1,
+      max_tokens: 1000
+    });
 
-    const response = await result.response;
-    return {
-      result: response.text(),
-      api: 'gemini'
-    };
+    console.log('Received response from OpenAI API');
+    return response.choices[0].message.content;
   } catch (error) {
-    console.error('Error in analyzeAudio:', error);
-    throw error instanceof Error ? error : new Error('分析失败，请重试');
+    console.error('Error in analyzeAudio:', {
+      message: error.message,
+      stack: error.stack
+    });
+    throw new Error(`Failed to analyze audio: ${error.message}`);
   }
 }
 
-export function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64String = reader.result as string;
-      resolve(base64String.split(',')[1]);
-    };
-    reader.onerror = error => reject(error);
-  });
-}
+module.exports = {
+  analyzeAudio
+};

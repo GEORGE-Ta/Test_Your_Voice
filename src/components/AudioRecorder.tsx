@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Circle } from 'lucide-react';
 
 interface AudioRecorderProps {
   onAudioRecorded: (audioBlob: Blob) => void;
@@ -26,19 +25,19 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioRecorded }) => {
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
         onAudioRecorded(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
     }
   };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);
     }
   };
@@ -46,25 +45,16 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioRecorded }) => {
   return (
     <button
       onClick={isRecording ? stopRecording : startRecording}
-      className={`
-        flex items-center justify-center gap-2 w-full py-3 rounded-full transition-all duration-300
-        ${isRecording 
-          ? 'bg-red-500 hover:bg-red-600 animate-pulse shadow-lg shadow-red-300/50' 
-          : 'bg-red-400 hover:bg-red-500'
-        }
-      `}
+      className={`w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium ${
+        isRecording 
+          ? 'bg-red-600 hover:bg-red-700 text-white'
+          : 'bg-gray-900 hover:bg-gray-800 text-white'
+      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500`}
     >
-      {isRecording ? (
-        <>
-          <Circle className="w-5 h-5 text-white animate-pulse" />
-          <span className="text-white font-medium animate-pulse">停止录音</span>
-        </>
-      ) : (
-        <>
-          <Mic className="w-5 h-5 text-white" />
-          <span className="text-white font-medium">录音</span>
-        </>
-      )}
+      <div className="flex items-center">
+        <div className={`w-3 h-3 rounded-full mr-2 ${isRecording ? 'bg-white animate-pulse' : 'bg-red-500'}`} />
+        {isRecording ? '停止录音' : '录音'}
+      </div>
     </button>
   );
 };

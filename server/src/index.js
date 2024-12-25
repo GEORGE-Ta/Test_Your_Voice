@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const { analyzeAudio } = require('./services/geminiService');
+const { analyzeAudio } = require('./services/openaiService');
 
 const app = express();
 
