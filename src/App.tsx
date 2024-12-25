@@ -4,7 +4,9 @@ import FileUploader from './components/FileUploader';
 import SubmitButton from './components/SubmitButton';
 import AnalysisResult from './components/AnalysisResult';
 import Footer from './components/Footer';
-import { analyzeAudio, isAudioFileValid } from './utils/gemini';
+import { analyzeAudio } from './utils/api';
+import { validateAudioFile } from './utils/audioValidation';
+import './App.css';
 
 function App() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -15,7 +17,7 @@ function App() {
   const handleAudioRecorded = (audioBlob: Blob) => {
     const file = new File([audioBlob], 'recorded-audio.wav', { type: 'audio/wav' });
     try {
-      isAudioFileValid(file);
+      validateAudioFile(file);
       setAudioFile(file);
       setAnalysisResult(null);
       setError(null);
@@ -27,7 +29,7 @@ function App() {
 
   const handleFileSelected = (file: File) => {
     try {
-      isAudioFileValid(file);
+      validateAudioFile(file);
       setAudioFile(file);
       setAnalysisResult(null);
       setError(null);
@@ -46,6 +48,7 @@ function App() {
       const result = await analyzeAudio(audioFile);
       setAnalysisResult(result);
     } catch (error) {
+      console.error('Error in handleSubmit:', error);
       setError(error instanceof Error ? error.message : '分析失败，请重试');
       setAudioFile(null);
     } finally {
@@ -54,24 +57,34 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-md space-y-6 sm:space-y-8">
-        <div className="text-center px-4">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">测测你的声音</h1>
-          <p className="text-gray-600 text-sm sm:text-base">听感，音色，反馈</p>
-        </div>
+    <div className="app-container">
+      <div className="card-container">
+        <h1 className="title">测测你的声音</h1>
+        <p className="subtitle">听感，音色，反馈</p>
         
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg space-y-4">
+        <div className="content-section">
           <AudioRecorder onAudioRecorded={handleAudioRecorded} />
+          
           <FileUploader onFileSelected={handleFileSelected} />
-          <SubmitButton onSubmit={handleSubmit} disabled={!audioFile || isAnalyzing} />
-        </div>
+          
+          <SubmitButton
+            onClick={handleSubmit}
+            disabled={!audioFile || isAnalyzing}
+            isLoading={isAnalyzing}
+          />
 
-        <AnalysisResult 
-          result={analysisResult}
-          isLoading={isAnalyzing}
-          error={error}
-        />
+          {error && (
+            <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded p-4 text-red-300">
+              {error}
+            </div>
+          )}
+
+          {analysisResult && <AnalysisResult
+            result={analysisResult}
+            isLoading={isAnalyzing}
+            error={error}
+          />}
+        </div>
       </div>
       <Footer />
     </div>

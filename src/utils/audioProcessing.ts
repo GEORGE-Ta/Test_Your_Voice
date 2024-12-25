@@ -1,15 +1,13 @@
-import { AudioData } from './types';
-
 export async function convertAudioToBase64(file: File): Promise<string> {
-  try {
-    const buffer = await file.arrayBuffer();
-    return btoa(
-      new Uint8Array(buffer).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ''
-      )
-    );
-  } catch (error) {
-    throw new Error('音频文件处理失败，请重试');
-  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64String = reader.result as string;
+      // Remove the data URL prefix (e.g., "data:audio/wav;base64,")
+      const base64Data = base64String.split(',')[1];
+      resolve(base64Data);
+    };
+    reader.onerror = (error) => reject(error);
+  });
 }
