@@ -5,41 +5,77 @@ const multer = require('multer');
 const { analyzeAudio } = require('./services/geminiService');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+
+// 增加请求体大小限制
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
+
+// 文件大小限制：20MB
+const maxFileSize = 20 * 1024 * 1024;
+
+// 允许的文件类型
+const allowedMimeTypes = [
+  'audio/wav',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/mp4',
+  'audio/webm',
+  'audio/ogg'
+];
+
+// 文件上传配置
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: maxFileSize
+  },
+  fileFilter: (req, file, cb) => {
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only audio files are allowed.'));
+    }
+  }
+});
 
 // CORS configuration
 const corsOptions = {
   origin: [
-    'https://shengyin.us.kg',                    // 你的主域名
-    'https://test-your-voice.vercel.app',        // Vercel 部署的域名（需要替换成你的）
-    'http://localhost:5173',                     // Vite 开发服务器
-    'http://localhost:3000'                      // 备用开发端口
+    'https://shengyin.us.kg',
+    'https://test-your-voice.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
   ],
-  methods: ['GET', 'POST', 'OPTIONS'],           // 允许的 HTTP 方法
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
     'Authorization',
     'X-Requested-With',
     'Accept'
   ],
-  credentials: true,                             // 允许携带凭证
-  maxAge: 86400                                 // CORS 预检请求缓存时间（24小时）
+  credentials: true,
+  maxAge: 86400
 };
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Routes
 app.post('/api/analyze-audio', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No audio file provided' });
+      return res.status(400).json({ 
+        error: 'No audio file provided',
+        details: 'Please upload an audio file'
+      });
     }
 
     const audioData = {
@@ -48,14 +84,36 @@ app.post('/api/analyze-audio', upload.single('audio'), async (req, res) => {
     };
 
     const result = await analyzeAudio(audioData);
-    res.json({ result });
+    res.json({ 
+      success: true,
+      result,
+      fileInfo: {
+        size: req.file.size,
+        mimeType: req.file.mimetype
+      }
+    });
   } catch (error) {
     console.error('Error analyzing audio:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    timestamp: new Date().toISOString()
+  });
 });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`File size limit: ${maxFileSize / (1024 * 1024)}MB`);
+  console.log(`Allowed file types: ${allowedMimeTypes.join(', ')}`);
 });
